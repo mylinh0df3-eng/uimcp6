@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>七夕 · 心里话</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a14;color:#f5f0e8;font-family:sans-serif;min-height:100vh}
+.page{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}
+.page.active{display:flex}
+.btn{background:none;border:none;color:#f5f0e8;font-size:1.1em;padding:10px 18px;cursor:pointer;margin:5px}
+.btn-primary{color:#d66a5a;border-bottom:2px solid #d66a5a}
+.barrage-track{position:absolute;left:0;width:100%;height:33%;overflow:hidden;display:flex;align-items:center}
+#track1{top:0}#track2{top:33%}#track3{top:66%}
+.barrage-item{position:absolute;white-space:nowrap;animation:move linear infinite}
+@keyframes move{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
+.letter-paper{background:#f5f0e8;color:#333;padding:20px;width:90%;max-width:500px;border-radius:4px}
+.letter-paper input,.letter-paper textarea{width:100%;background:none;border:none;font-size:1.1em;padding:8px 0}
+.letter-paper textarea{min-height:150px;resize:none}
+.wish-item{padding:8px;margin:5px 0;background:rgba(255,255,255,.05);border-radius:4px;cursor:pointer}
+.puzzle-board{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;max-width:300px;margin:0 auto}
+.puzzle-slot{aspect-ratio:1;background:#1e1e2e;border:1px dashed #444}
+.piece-pool{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:10px}
+.piece-pool img{width:70px;height:70px;object-fit:cover;cursor:grab}
+.mic-btn{width:80px;height:80px;border-radius:50%;border:2px solid #d66a5a;background:none;color:#d66a5a;font-size:30px;margin:20px auto}
+#toast{position:fixed;top:20%;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;display:none;z-index:999}
+</style>
+</head>
+<body>
+
+<!-- 开场页 -->
+<div class="page active" id="page-intro">
+  <div>有些话，平时说不出口。</div>
+  <div style="margin-top:10px;">今天，可以对我说吗？</div>
+  <div style="margin-top:20px;">
+    <button class="btn" onclick="showPage('letter-choice')">写点什么</button>
+    <button class="btn" onclick="showPage('home');initBarrage()">先逛逛</button>
+  </div>
+</div>
+
+<!-- 弹幕墙 -->
+<div class="page" id="page-home">
+  <div class="barrage-track" id="track1"></div>
+  <div class="barrage-track" id="track2"></div>
+  <div class="barrage-track" id="track3"></div>
+  <button class="btn btn-primary" style="position:absolute;bottom:30px;left:20px;" onclick="addBarrage()">✎ 我也想说一句</button>
+  <nav style="position:absolute;right:10px;top:50%;writing-mode:vertical-rl;display:flex;gap:15px;font-size:14px;color:#888">
+    <a onclick="showPage('letter-choice')">情书</a>
+    <a onclick="showPage('wish-entry')">愿望</a>
+    <a onclick="showPage('puzzle-entry')">拼图</a>
+    <a onclick="showPage('voice-entry')">声音</a>
+  </nav>
+</div>
+
+<!-- 写信选择 -->
+<div class="page" id="page-letter-choice">
+  <h2>写一封信</h2>
+  <p style="color:#888">给现在的人 · 给未来的人</p>
+  <button class="btn btn-primary" onclick="showPage('letter-write')">现在寄出</button>
+  <button class="btn" onclick="alert('这个功能马上就来')">定时寄出</button>
+  <p style="margin-top:20px"><a href="#" onclick="showPage('letter-wall')" style="color:#888">看看别人写的信 → 信墙</a></p>
+</div>
+
+<!-- 写信页 -->
+<div class="page" id="page-letter-write">
+  <div class="letter-paper">
+    <input type="text" id="letterTo" placeholder="致 ______">
+    <textarea id="letterContent" placeholder="在这里写你想说的话..."></textarea>
+    <input type="text" id="letterFrom" placeholder="—— 你的名字（留空显示匿名）">
+  </div>
+  <div style="margin-top:10px">
+    <button class="btn" onclick="saveLetter()">保存草稿</button>
+    <button class="btn btn-primary" onclick="sealLetter()">封存这封信</button>
+  </div>
+</div>
+
+<!-- 封存页 -->
+<div class="page" id="page-letter-seal">
+  <p>这封信已封存</p>
+  <button class="btn" onclick="copyLink()">复制链接</button>
+  <button class="btn" onclick="alert('请截图保存')">下载为图片</button>
+</div>
+
+<!-- 收信页 -->
+<div class="page" id="page-letter-receive">
+  <div id="receiveContent">
+    <div class="letter-paper" id="receiveLetter"></div>
+    <button class="btn btn-primary" onclick="showPage('letter-write')">我也想写一封回去</button>
+  </div>
+</div>
+
+<!-- 信墙 -->
+<div class="page" id="page-letter-wall">
+  <h2>信墙</h2>
+  <div id="wallCards"></div>
+</div>
+
+<!-- 愿望入口 -->
+<div class="page" id="page-wish-entry">
+  <h2>我们的愿望清单</h2>
+  <p style="color:#888">想一起做的事，一件一件来。</p>
+  <button class="btn btn-primary" onclick="showPage('wish-list')">创建我们的清单</button>
+  <button class="btn" onclick="showPage('wish-inspire')">看看别人的愿望</button>
+</div>
+
+<!-- 清单页 -->
+<div class="page" id="page-wish-list">
+  <h3>我们的愿望清单</h3>
+  <div id="wishUndone"></div>
+  <div id="wishDone" style="margin-top:20px;opacity:.6"></div>
+  <button class="btn" onclick="addWish()">+ 添加新愿望</button>
+</div>
+
+<!-- 灵感库 -->
+<div class="page" id="page-wish-inspire">
+  <h2>灵感库</h2>
+  <div id="inspireList"></div>
+</div>
+
+<!-- 拼图入口 -->
+<div cla
